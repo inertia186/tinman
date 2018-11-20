@@ -1,0 +1,38 @@
+{
+ "transactions_per_block" : 40,
+
+ "transaction_signer" : "tnman",
+
+ "transaction_source" :
+ {
+  "node" : "https://api.steemit.com",
+  "appbase" : "True"
+ },
+
+ "transaction_target" :
+ {
+  "node" : "http://stewie.local:8091",
+  "appbase" : "True"
+ },
+
+ "min_block_number" : "0",
+ "max_block_number" : "0",
+
+ "ported_operations" :
+ [
+ {"type":"account_create_operation","roles":["active"]},
+ {"type":"account_update_operation","roles":["active"]},
+ {"type":"cancel_transfer_from_savings_operation","roles":["active"]},
+ {"type":"convert_operation","roles":["active"]},
+ {"type":"delegate_vesting_shares_operation","roles":["active"]},
+ {"type":"limit_order_cancel_operation","roles":["active"]},
+ {"type":"limit_order_create2_operation","roles":["active"]},
+ {"type":"limit_order_create_operation","roles":["active"]},
+ {"type":"set_withdraw_vesting_route_operation","roles":["active"]},
+ {"type":"transfer_from_savings_operation","roles":["active"]},
+ {"type":"transfer_operation","roles":["active"]},
+ {"type":"transfer_to_savings_operation","roles":["active"]},
+ {"type":"transfer_to_vesting_operation","roles":["active"]},
+ {"type":"withdraw_vesting_operation","roles":["active"]}
+ ]
+}

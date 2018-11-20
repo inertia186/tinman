@@ -38,6 +38,14 @@ def repack_operations(conf, keydb, min_block, max_block, from_blocks_ago, to_blo
     steemd = SteemInterface(backend)
     dgpo = steemd.database_api.get_dynamic_global_properties()
     
+    target_node = conf.get("transaction_target", {}).get("node", None)
+    if target_node:
+        tx_signer = conf["transaction_signer"]
+        is_appbase = str2bool(conf["transaction_target"]["appbase"])
+        backend = SteemRemoteBackend(nodes=[target_node], appbase=is_appbase)
+        target_steemd = SteemInterface(backend)
+
+
     if min_block == 0:
         min_block = dgpo["head_block_number"]
 
@@ -52,6 +60,9 @@ def repack_operations(conf, keydb, min_block, max_block, from_blocks_ago, to_blo
     """ Positive value of max_block means get from [min_block_number,max_block_number) range and stop """
     if max_block > 0: 
         for op in util.iterate_operations_from(steemd, is_appbase, min_block, max_block, ported_types):
+            if target_steemd and not valid_op(target_steemd, op):
+                continue
+
             yield op_for_role(op, conf, keydb, ported_operations)
         return
     """
@@ -67,9 +78,33 @@ def repack_operations(conf, keydb, min_block, max_block, from_blocks_ago, to_blo
             dgpo = steemd.database_api.get_dynamic_global_properties()
             new_head_block = dgpo["head_block_number"]
         for op in util.iterate_operations_from(steemd, is_appbase, old_head_block, new_head_block, ported_types):
+            if target_steemd and not valid_op(target_steemd, op):
+                continue
+            
             yield op_for_role(op, conf, keydb, ported_operations)
         old_head_block = new_head_block
     return
+
+def valid_op(target_steemd, op):
+    tx = {
+        "operations": [{"type": op["type"], "value": op["value"]}]
+    }
+    try:
+        required_sigs = target_steemd.database_api.get_required_signatures(trx=tx, available_keys=[])
+        return len(required_sigs["keys"]) > 0
+    except SteemRPCException as e:
+        cause = e.args[0].get("error")
+        if cause:
+            message = cause.get("message")
+            data = cause.get("data")
+            retry = False
+        
+        if data and type(data) == str:
+            if data == 'unknown key':
+                return False
+            else:
+                print("cause:", cause)
+                exit(-1)
 
 def op_for_role(op, conf, keydb, ported_operations):
     """
